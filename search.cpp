@@ -27,7 +27,7 @@ unordered_map<string, pair<int, int>> LoadIndex(string filename)
 
 const unordered_map<string, pair<int, int>> index(LoadIndex("data/index.txt"));
 vector<Node> inverted_index;
-ifstream inverted_index_file("data/inverted_index.bin", ios::binary);
+ifstream inverted_index_file("models/inverted_index.bin", ios::binary);
 bool load_inverted_index = false;
 
 Node InvertedIndex(size_t i)

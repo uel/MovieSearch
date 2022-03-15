@@ -8,12 +8,19 @@ nltk.download('wordnet')
 nltk.download('omw-1.4')
 nltk.download("stopwords")
 
-def Tokenize(s):
+lemmatizer = nltk.stem.WordNetLemmatizer()
+stopwords = set(open("data/stopwords").read().split("\n"))
+
+def Tokenize(s, removeStopwords=False):
     s = ''.join(filter(lambda c: isalnum(c) or isspace(c), s.lower()))
     words = word_tokenize(s) 
-    lemmatizer = nltk.stem.WordNetLemmatizer()
-    words = [lemmatizer.lemmatize(word) for word in words]
-    return words
+    result = []
+    for w in words:
+        l = lemmatizer.lemmatize(w)
+        if removeStopwords and l in stopwords: continue
+        result.append(l)
+   
+    return result
 
 def SaveCounts(counts, output_file):
     with open(output_file, 'w') as f:
@@ -41,7 +48,7 @@ def GetCounts(s):
 def GetCountsFromFile(input_file):
     return GetCounts(open(input_file, "r").read())
 
-def ProcessData():
+def ProcessCounts():
     i = 0
     for f in os.listdir('data/parsed'):
         if f.endswith('.txt'):
@@ -51,5 +58,15 @@ def ProcessData():
             SaveCounts(counts, target)
             print(i, "files processed", end='\r')
 
+def LineCorpus():
+    i = 0
+    with open('data/docs.cor', 'a') as out:
+        for f in open('data/documents.txt').read().split('\n'):
+            i+=1
+            out.write(' '.join(Tokenize(open(os.path.join('data/parsed', f+'.txt'), "r").read(), True))+'\n')
+            print(i, "files processed", end='\r')
 
-
+if __name__ == "__main__":
+    # GetCountsFromFileBig('data/documents.txt')
+    # ProcessCounts()
+    LineCorpus()

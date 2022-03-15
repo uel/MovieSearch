@@ -3,6 +3,7 @@ import sqlite3
 import pexpect
 import word_processing
 import math
+from gensim.models.doc2vec import Doc2Vec
 
 DATABASE = 'subtitles.db'
 
@@ -24,11 +25,19 @@ def search(query):
     index.expect("\n", timeout=None); index.expect("\n")
     return list(map(int, str(index.before)[2:-3].strip().split(" ")))
 
+
+i2documents = { i : int(j) for i, j in enumerate(open('data/documents.txt', 'r').read().splitlines()) }
+doc2vec_model = Doc2Vec.load("models/doc2vec.model")
+
+def doc2vecSearch(query):
+    vec = doc2vec_model.infer_vector(word_processing.Tokenize(query, True))
+    res = doc2vec_model.dv.most_similar([vec], topn=50)
+    return [i2documents[i] for i, _ in res]
+
 app = Flask(__name__)
 
 def make_dicts(cursor, row):
-    return dict((cursor.description[idx][0], value)
-                for idx, value in enumerate(row))
+    return dict((cursor.description[idx][0], value) for idx, value in enumerate(row))
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -50,11 +59,18 @@ def hello_world():
 @app.route("/movies")
 def Movies():
     query = request.args.get('query')
+    doc2vec = request.args.get('doc2vec')
     if query == "" or query == None:
         return "[]"
-    ids = search(query)
+
+    if doc2vec == "true":
+        ids = doc2vecSearch(query)
+    else:
+        ids = search(query)
+    
     if ids == []:
         return "[]"
+    
     i_ids = {j:i for i, j in enumerate(ids)}
     movies = get_db().execute('SELECT * FROM OpenSubtitles WHERE IDSubtitle IN '+str(tuple(ids))).fetchall()
     movies = sorted(list(movies), key=lambda x: i_ids[x['IDSubtitle']])

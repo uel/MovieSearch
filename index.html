@@ -36,6 +36,7 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="static/bearhug.js"></script>
 
+
     <div id="app" class="d-flex flex-column align-items-center w-100">
         <nav class="navbar navbar-expand-lg w-100" style="background-color:lightblue; justify-content: center;">
             <div class="d-flex flex-column align-items-center">
@@ -44,9 +45,13 @@
                         <path
                             d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
                     </svg>vie Search</h1>
-                <input v-model="query" type="text" class="m-3 text-center w-100"
-                    style="font-size: large; border-radius: 1rem; border-width: 1px; height: 3rem; background-color:rgb(255, 255, 242)"
-                    placeholder="Search subtitles" />
+                <div class="d-flex flex-row align-items-center">
+                    <input v-model="query" type="text" class="m-2 me-1 text-center w-100"
+                        style="font-size: large; border-radius: 1rem; border-width: 1px; height: 3rem; background-color:rgb(255, 255, 242);"
+                        placeholder="Search subtitles" />
+                    <span style="visibility: hidden; width: 0;"><input id="doc2vec"
+                            type="checkbox"></input>doc2vec</span>
+                </div>
             </div>
         </nav>
         <div style="gap: 1rem;" class="d-flex flex-column align-items-center">
@@ -58,6 +63,7 @@
                     <iframe :id="movie.ImdbID" :onload="`markIFrames('`+this.query+`','`+String(movie.ImdbID)+`')`"
                         :src="'static/subs/'+String(movie.IDSubtitle)+'.txt'" frameborder="0"
                         style="overflow-y: scroll; white-space: pre-wrap; line-height: 2; width: 32rem; height: 12rem; margin-left: 2rem;"></iframe>
+                    <button class="m-4 btn btn-primary" @click="setSimilar('static/subs/'+String(movie.IDSubtitle)+'.txt');">Search Similar</button>
                 </div>
             </div>
         </div>
@@ -70,6 +76,7 @@
             data() {
                 return {
                     query: '',
+                    doc2vec: false,
                     movies: [],
                     more: []
                 }
@@ -80,6 +87,7 @@
                         axios.get('/movies', {
                             params: {
                                 query: this.query,
+                                doc2vec: document.getElementById('doc2vec').checked
                             }
                         }).then(response => {
                             pattern = this.query.replace(/[^0-9a-z ]/gi, '').toLowerCase().split(' ');
@@ -87,9 +95,16 @@
                             this.movies = this.more.splice(0, 5);
                         });
                     }, 1000)
+            },
+            methods: {
+                setSimilar(url) {
+                    axios.get(url).then(response => { this.query = response.data; });
+                    this.watch.query();
+                }
             }
         }
         Vue.createApp(App).mount('#app')
+
     </script>
 
 </body>
